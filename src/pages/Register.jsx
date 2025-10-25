@@ -8,30 +8,31 @@ const Register = () => {
   const [disabled, setDisabled] = useState(false);
   const [message, setMessage] = useState("");
 
+  // ✅ Use environment variable for backend API base URL
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
   // ✅ Check if Super Admin already exists
   useEffect(() => {
     const checkSuperAdmin = async () => {
       try {
-        const res = await fetch(
-          "http://localhost:4000/api/auth/check-superadmin"
-        );
+        const res = await fetch(`${API_BASE}/api/auth/check-superadmin`);
         const data = await res.json();
 
         if (data.exists) {
-          // Hide registration form if Super Admin exists
           setDisabled(true);
           setMessage("Super Admin already registered. Redirecting to login...");
           setTimeout(() => navigate("/login"), 2500);
         }
       } catch (err) {
         console.error("Error checking Super Admin:", err);
+        setMessage("Error connecting to the server.");
       }
     };
 
     checkSuperAdmin();
-  }, [navigate]);
+  }, [navigate, API_BASE]);
 
-  // ✅ Handle input
+  // ✅ Handle input change
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -43,7 +44,7 @@ const Register = () => {
     setMessage("");
 
     try {
-      const res = await fetch("http://localhost:4000/api/admin/register", {
+      const res = await fetch(`${API_BASE}/api/admin/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -55,7 +56,7 @@ const Register = () => {
         alert("🎉 Super Admin registered successfully!");
         navigate("/login");
       } else {
-        setMessage(data.message || "Registration failed");
+        setMessage(data.message || "Registration failed.");
       }
     } catch (err) {
       console.error("Registration error:", err);

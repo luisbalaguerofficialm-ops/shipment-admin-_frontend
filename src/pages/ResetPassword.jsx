@@ -1,4 +1,3 @@
-// ...existing code...
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock, CheckCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -6,11 +5,10 @@ import toast from "react-hot-toast";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token"); // optional reset token from email
+  const token = searchParams.get("token"); // token from email link
   const navigate = useNavigate();
 
-  // ...existing code...
-  // hide sidebar / navbar / topbar while this page is mounted
+  // ✅ Hide navbars and sidebars
   useEffect(() => {
     const selectors = [
       "#sidebar",
@@ -27,31 +25,25 @@ const ResetPassword = () => {
       "[data-role='header']",
       ".top-nav",
       ".topnav",
-      "nav", // fallback (will hide any <nav> elements)
+      "nav",
     ];
 
     const changed = [];
-
     selectors.forEach((sel) => {
-      try {
-        const nodes = document.querySelectorAll(sel);
-        nodes.forEach((el) => {
-          // remember previous inline display so we can restore exactly
-          changed.push({ el, prev: el.style.display });
-          el.style.display = "none";
-        });
-      } catch (e) {
-        // ignore selector errors
-      }
+      document.querySelectorAll(sel).forEach((el) => {
+        changed.push({ el, prev: el.style.display });
+        el.style.display = "none";
+      });
     });
 
     return () => {
-      // restore original inline display values
       changed.forEach(({ el, prev }) => {
         el.style.display = prev || "";
       });
     };
   }, []);
+
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,6 +51,7 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -77,16 +70,31 @@ const ResetPassword = () => {
       return;
     }
 
+    if (!token) {
+      toast.error("Reset token missing or invalid.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Simulate API call (replace with actual fetch to backend)
-      await new Promise((res) => setTimeout(res, 1500));
+      const res = await fetch(`${API_BASE}/api/admin/reset-password/${token}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword: password }),
+      });
 
-      toast.success("Password reset successfully!");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Password reset failed");
+      }
+
+      toast.success("✅ Password reset successfully!");
       navigate("/login");
     } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+      console.error("Reset error:", error);
+      toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -175,4 +183,3 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
-// ...existing code...

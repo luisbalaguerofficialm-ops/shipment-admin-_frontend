@@ -8,14 +8,16 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // ✅ Use environment variable for backend URL
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      // Match your backend route exactly
-      const res = await fetch("http://localhost:4000/api/admin/login", {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -23,24 +25,23 @@ const Login = () => {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Invalid credentials");
       }
 
-      //  Save full user data and token
+      // ✅ Save user data and token
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.admin));
 
-      //  Redirect based on role
-      if (data.admin.role === "SuperAdmin") {
-        navigate("/admin/dashboard");
-      } else if (data.admin.role === "Admin") {
+      // ✅ Redirect by role
+      if (data.admin.role === "SuperAdmin" || data.admin.role === "Admin") {
         navigate("/admin/dashboard");
       } else {
         throw new Error("Unauthorized role");
       }
     } catch (err) {
-      setError(err.message);
+      console.error("Login error:", err);
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,7 @@ const Login = () => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-2 rounded-lg text-white font-semibold ${
+          className={`w-full py-2 rounded-lg text-white font-semibold transition ${
             loading
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-blue-700 hover:bg-blue-800"
