@@ -1,5 +1,6 @@
 // ...existing code...
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Edit, Trash2, UserPlus, X } from "lucide-react";
@@ -56,11 +57,53 @@ const Users = () => {
     status: "Active",
   });
 
-  const handleAddUser = (e) => {
+  // Add user via backend if SuperAdmin
+  const handleAddUser = async (e) => {
     e.preventDefault();
-    setUsers([...users, newUser]);
-    setNewUser({ name: "", email: "", role: "", branch: "", status: "Active" });
-    setShowAddModal(false);
+    // Validation
+    const { name, email, role, branch } = newUser;
+    if (!name.trim() || !email.trim() || !role.trim() || !branch.trim()) {
+      toast.error("All fields are required.");
+      return;
+    }
+    // Email format
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    // Prevent duplicate emails
+    if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
+      toast.error("A user with this email already exists.");
+      return;
+    }
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      toast.error("You must be logged in as SuperAdmin to add users.");
+      return;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com"}/api/admin/register-admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(newUser),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success("Admin registered successfully!");
+        setUsers([...users, newUser]);
+        setNewUser({ name: "", email: "", role: "", branch: "", status: "Active" });
+        setShowAddModal(false);
+      } else {
+        toast.error(data.message || "Failed to register admin.");
+      }
+    } catch (err) {
+      console.error("Add admin error:", err);
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
   const handleStartEdit = (index) => {

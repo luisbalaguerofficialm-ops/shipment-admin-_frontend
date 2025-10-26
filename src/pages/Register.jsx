@@ -7,8 +7,7 @@ const Register = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [disabled, setDisabled] = useState(false);
-  const [message, setMessage] = useState("");
+  // Remove disabled/message state, always redirect if SuperAdmin exists
 
   // ✅ Use deployed backend URL from .env or fallback
   const API_BASE =
@@ -20,20 +19,14 @@ const Register = () => {
       try {
         const res = await fetch(`${API_BASE}/api/admin/check-superadmin`);
         const data = await res.json();
-
         if (data.superAdminExists) {
-          setDisabled(true);
-          // Use a toast so it's visible even if not rendering the inline message
-          toast.info("Super Admin already registered. Redirecting to login...");
-          setTimeout(() => navigate("/login"), 2500);
+          navigate("/login");
         }
       } catch (err) {
         console.error("Error checking SuperAdmin:", err);
         toast.error("Error connecting to the server.");
-        setMessage("Error connecting to the server.");
       }
     };
-
     checkSuperAdmin();
   }, [navigate, API_BASE]);
 
@@ -81,18 +74,7 @@ const Register = () => {
           Super Admin Registration
         </h2>
 
-        {message && (
-          <p
-            className={`text-center mb-4 ${
-              disabled ? "text-green-600" : "text-red-500"
-            }`}
-          >
-            {message}
-          </p>
-        )}
-
-        {!disabled && (
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               name="name"
@@ -125,7 +107,7 @@ const Register = () => {
 
             <button
               type="submit"
-              disabled={loading || disabled}
+              disabled={loading}
               className={`w-full py-2 rounded-md text-white font-semibold transition ${
                 loading
                   ? "bg-gray-400 cursor-not-allowed"
@@ -135,7 +117,7 @@ const Register = () => {
               {loading ? "Registering..." : "Register"}
             </button>
           </form>
-        )}
+  {/* If SuperAdmin exists, user is redirected to login above. */}
       </div>
     </div>
   );
