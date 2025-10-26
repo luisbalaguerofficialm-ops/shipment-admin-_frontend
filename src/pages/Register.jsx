@@ -1,5 +1,7 @@
+// Last updated: 2025-10-26 — Added react-toastify toasts
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -21,11 +23,13 @@ const Register = () => {
 
         if (data.superAdminExists) {
           setDisabled(true);
-          setMessage("Super Admin already registered. Redirecting to login...");
+          // Use a toast so it's visible even if not rendering the inline message
+          toast.info("Super Admin already registered. Redirecting to login...");
           setTimeout(() => navigate("/login"), 2500);
         }
       } catch (err) {
         console.error("Error checking SuperAdmin:", err);
+        toast.error("Error connecting to the server.");
         setMessage("Error connecting to the server.");
       }
     };
@@ -54,13 +58,16 @@ const Register = () => {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        alert("🎉 Super Admin registered successfully!");
-        navigate("/login");
+        toast.success("🎉 Super Admin registered successfully! Redirecting to login...");
+        // give the toast a moment to show before navigating
+        setTimeout(() => navigate("/login"), 1400);
       } else {
+        toast.error(data.message || "Registration failed.");
         setMessage(data.message || "Registration failed.");
       }
     } catch (err) {
       console.error("Registration error:", err);
+      toast.error("An unexpected error occurred. Please try again.");
       setMessage("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -118,7 +125,7 @@ const Register = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || disabled}
               className={`w-full py-2 rounded-md text-white font-semibold transition ${
                 loading
                   ? "bg-gray-400 cursor-not-allowed"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock, CheckCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();

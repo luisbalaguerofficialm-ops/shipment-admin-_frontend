@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -35,13 +36,17 @@ const Login = () => {
 
       // ✅ Redirect by role
       if (data.admin.role === "SuperAdmin" || data.admin.role === "Admin") {
-        navigate("/admin/dashboard");
+        toast.success("Welcome back! Redirecting...");
+        // let the toast show briefly before navigating
+        setTimeout(() => navigate("/admin/dashboard"), 900);
       } else {
         throw new Error("Unauthorized role");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.message || "An unexpected error occurred");
+      const msg = err.message || "An unexpected error occurred";
+      toast.error(msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }

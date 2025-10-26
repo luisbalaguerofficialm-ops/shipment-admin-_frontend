@@ -5,7 +5,8 @@ import axios from "axios";
 import AdminRoutes from "./routes/AdminRoutes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import { Toaster } from "react-hot-toast";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
+  <ToastContainer position="top-right" />
 
       <Routes>
         {/* 🟩 Case 1: No SuperAdmin yet → only allow Register page */}
