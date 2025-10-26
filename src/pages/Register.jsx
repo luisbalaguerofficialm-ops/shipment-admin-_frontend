@@ -8,23 +8,24 @@ const Register = () => {
   const [disabled, setDisabled] = useState(false);
   const [message, setMessage] = useState("");
 
-  // ✅ Use environment variable for backend API base URL
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  // ✅ Use deployed backend URL from .env or fallback
+  const API_BASE =
+    import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com";
 
-  // ✅ Check if Super Admin already exists
+  // ✅ Check if a SuperAdmin already exists
   useEffect(() => {
     const checkSuperAdmin = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/auth/check-superadmin`);
+        const res = await fetch(`${API_BASE}/api/admin/check-superadmin`);
         const data = await res.json();
 
-        if (data.exists) {
+        if (data.superAdminExists) {
           setDisabled(true);
           setMessage("Super Admin already registered. Redirecting to login...");
           setTimeout(() => navigate("/login"), 2500);
         }
       } catch (err) {
-        console.error("Error checking Super Admin:", err);
+        console.error("Error checking SuperAdmin:", err);
         setMessage("Error connecting to the server.");
       }
     };
@@ -32,12 +33,12 @@ const Register = () => {
     checkSuperAdmin();
   }, [navigate, API_BASE]);
 
-  // ✅ Handle input change
+  // ✅ Handle input changes
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle registration submit
+  // ✅ Handle registration
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -94,6 +95,7 @@ const Register = () => {
               required
               className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
+
             <input
               type="email"
               name="email"
@@ -103,6 +105,7 @@ const Register = () => {
               required
               className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
+
             <input
               type="password"
               name="password"
