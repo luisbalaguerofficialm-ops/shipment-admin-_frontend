@@ -7,7 +7,7 @@ const Register = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  // Remove disabled/message state, always redirect if SuperAdmin exists
+  const [error, setError] = useState("");
 
   // ✅ Use deployed backend URL from .env or fallback
   const API_BASE =
@@ -17,14 +17,25 @@ const Register = () => {
   useEffect(() => {
     const checkSuperAdmin = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/admin/check-superadmin`);
+        const res = await fetch(`${API_BASE}/api/admin/check-superadmin`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to check SuperAdmin status');
+        }
+        
         const data = await res.json();
         if (data.superAdminExists) {
           navigate("/login");
         }
       } catch (err) {
         console.error("Error checking SuperAdmin:", err);
-        toast.error("Error connecting to the server.");
+        toast.error("Error connecting to server. Please check your connection and try again.");
+        setError("Server connection error. Please refresh the page.");
       }
     };
     checkSuperAdmin();
@@ -39,7 +50,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
+    setError("");
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/register`, {
@@ -56,12 +67,12 @@ const Register = () => {
         setTimeout(() => navigate("/login"), 1400);
       } else {
         toast.error(data.message || "Registration failed.");
-        setMessage(data.message || "Registration failed.");
+        setError(data.message || "Registration failed.");
       }
     } catch (err) {
       console.error("Registration error:", err);
       toast.error("An unexpected error occurred. Please try again.");
-      setMessage("An unexpected error occurred. Please try again.");
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
