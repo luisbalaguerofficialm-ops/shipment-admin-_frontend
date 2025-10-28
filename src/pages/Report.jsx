@@ -108,11 +108,25 @@ const Report = () => {
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `reports-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reports-${new Date().toISOString().slice(0, 10)}.csv`;
+      // Some browsers require the link to be in the document before clicking
+      if (document.body) document.body.appendChild(a);
+      a.click();
+      // cleanup
+      if (a.parentNode) a.parentNode.removeChild(a);
+    } catch (err) {
+      console.error("CSV export error:", err);
+      alert("Failed to export CSV. Please try again.");
+    } finally {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // ignore
+      }
+    }
   };
 
   // simple "Filter" action (keeps inputs controlled); kept for UX parity
