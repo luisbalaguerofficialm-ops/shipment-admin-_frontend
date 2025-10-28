@@ -83,19 +83,31 @@ const Users = () => {
       return;
     }
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com"}/api/admin/register-admin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(newUser),
-      });
+      const res = await fetch(
+        `${
+          import.meta.env.VITE_API_URL ||
+          "https://admin-ship-backend.onrender.com"
+        }/api/admin/register-admin`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newUser),
+        }
+      );
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success("Admin registered successfully!");
         setUsers([...users, newUser]);
-        setNewUser({ name: "", email: "", role: "", branch: "", status: "Active" });
+        setNewUser({
+          name: "",
+          email: "",
+          role: "",
+          branch: "",
+          status: "Active",
+        });
         setShowAddModal(false);
       } else {
         toast.error(data.message || "Failed to register admin.");

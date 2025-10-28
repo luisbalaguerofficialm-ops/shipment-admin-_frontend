@@ -30,15 +30,32 @@ const ResetPassword = () => {
 
     const changed = [];
     selectors.forEach((sel) => {
-      document.querySelectorAll(sel).forEach((el) => {
-        changed.push({ el, prev: el.style.display });
-        el.style.display = "none";
-      });
+      try {
+        document.querySelectorAll(sel).forEach((el) => {
+          // store previous style and hide if element is in document
+          if (el && el instanceof Node && document.contains(el)) {
+            changed.push({ el, prev: el.style.display });
+            el.style.display = "none";
+          }
+        });
+      } catch (err) {
+        // ignore selector errors and continue
+        // eslint-disable-next-line no-console
+        console.warn(`Error hiding selector ${sel}:`, err);
+      }
     });
 
     return () => {
       changed.forEach(({ el, prev }) => {
-        el.style.display = prev || "";
+        try {
+          if (el && el instanceof Node && document.contains(el)) {
+            el.style.display = prev || "";
+          }
+        } catch (err) {
+          // ignore errors during cleanup
+          // eslint-disable-next-line no-console
+          console.warn("Error restoring element display:", err);
+        }
       });
     };
   }, []);

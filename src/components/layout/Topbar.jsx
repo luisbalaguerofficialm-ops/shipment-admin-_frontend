@@ -51,10 +51,23 @@ export default function Topbar({ activePage, onLogout }) {
   // Close notifications when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setShowNotifications(false);
+      try {
+        // Defensive checks: ensure refs and event target are valid Nodes
+        if (!notifRef.current) return;
+        const target = e && e.target;
+        if (!target || !(target instanceof Node)) return;
+        // ensure the target is still in the document (avoids "Node cannot be found" errors)
+        if (!document.contains(target)) return;
+        if (!notifRef.current.contains(target)) {
+          setShowNotifications(false);
+        }
+      } catch (err) {
+        // Log and swallow — avoid crashing due to transient DOM state
+        // eslint-disable-next-line no-console
+        console.warn("Click outside handler error:", err);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
