@@ -112,7 +112,7 @@ const ResetPassword = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+  <form onSubmit={handleSubmit} className="space-y-5" autoComplete="on">
           {/* Password Field */}
           <div className="relative">
             <label className="block text-gray-700 font-medium mb-1">
@@ -121,11 +121,13 @@ const ResetPassword = () => {
             <div className="flex items-center border border-gray-300 rounded-lg p-2">
               <Lock size={18} className="text-gray-400 mr-2" />
               <input
+                name="newPassword"
                 type={showPassword ? "text" : "password"}
                 className="w-full outline-none bg-transparent text-gray-700"
                 placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -145,11 +147,13 @@ const ResetPassword = () => {
             <div className="flex items-center border border-gray-300 rounded-lg p-2">
               <Lock size={18} className="text-gray-400 mr-2" />
               <input
+                name="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 className="w-full outline-none bg-transparent text-gray-700"
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
               />
               <button
                 type="button"

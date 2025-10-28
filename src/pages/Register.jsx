@@ -85,7 +85,7 @@ const Register = () => {
           Super Admin Registration
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
             <input
               type="text"
               name="name"
@@ -93,6 +93,7 @@ const Register = () => {
               value={form.name}
               onChange={handleChange}
               required
+              autoComplete="name"
               className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
 
@@ -103,6 +104,7 @@ const Register = () => {
               value={form.email}
               onChange={handleChange}
               required
+              autoComplete="email"
               className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
 
@@ -113,6 +115,7 @@ const Register = () => {
               value={form.password}
               onChange={handleChange}
               required
+              autoComplete="new-password"
               className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
             />
 

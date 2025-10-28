@@ -274,6 +274,8 @@ const Users = () => {
                 }
                 className="w-full border rounded-lg p-2 outline-none"
                 required
+                name="name"
+                autoComplete="name"
               />
               <input
                 type="email"
@@ -284,6 +286,8 @@ const Users = () => {
                 }
                 className="w-full border rounded-lg p-2 outline-none"
                 required
+                name="email"
+                autoComplete="email"
               />
               <select
                 value={newUser.role}
