@@ -1,4 +1,3 @@
-import React from "react";
 import DashboardGrid from "../components/dashboard/DashboardGrid";
 
 const Dashboard = () => {

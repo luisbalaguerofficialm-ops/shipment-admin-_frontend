@@ -9,7 +9,6 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Use environment variable for backend URL
   const API_BASE =
     import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com";
 
@@ -33,21 +32,17 @@ const Login = () => {
         throw new Error(data.message || "Invalid credentials");
       }
 
-      // ✅ Save user data and token
+      // Save user and token
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.admin));
-
+      localStorage.setItem("role", data.admin.role); // store role for route checks
       console.log("💾 Token saved:", localStorage.getItem("authToken"));
       console.log("💼 Role:", data.admin.role);
 
-      // ✅ Redirect by role
-      if (data.admin.role === "SuperAdmin" || data.admin.role === "Admin") {
-        toast.success("Welcome back! Redirecting...");
-        console.log("➡️ Navigating to /dashboard...");
-        setTimeout(() => navigate("/dashboard", { replace: true }), 900);
-      } else {
-        throw new Error("Unauthorized role");
-      }
+      toast.success("Welcome back! Redirecting...");
+
+      // Navigate to dashboard
+      setTimeout(() => navigate("/dashboard", { replace: true }), 900);
     } catch (err) {
       console.error("🚨 Login error:", err);
       const msg = err.message || "An unexpected error occurred";
