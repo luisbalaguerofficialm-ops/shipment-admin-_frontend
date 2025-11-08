@@ -29,11 +29,14 @@ const Register = () => {
         }
 
         const data = await res.json();
+        console.log("✅ SuperAdmin check response:", data); // Added
         if (data.superAdminExists) {
-          navigate("/login");
+          console.log("➡️ Navigating to /login..."); // Added
+          // short delay to prevent React DOM race condition
+          setTimeout(() => navigate("/login"), 100);
         }
       } catch (err) {
-        console.error("Error checking SuperAdmin:", err);
+        console.error("🚨 Error checking SuperAdmin:", err);
         toast.error(
           "Error connecting to server. Please check your connection and try again."
         );
@@ -67,14 +70,16 @@ const Register = () => {
         toast.success(
           "🎉 Super Admin registered successfully! Redirecting to login..."
         );
-        // give the toast a moment to show before navigating
+        console.log("✅ Registration successful:", data);
+        // Give toast time to appear
         setTimeout(() => navigate("/login"), 1400);
       } else {
         toast.error(data.message || "Registration failed.");
         setError(data.message || "Registration failed.");
+        console.error("❌ Registration failed:", data);
       }
     } catch (err) {
-      console.error("Registration error:", err);
+      console.error("🚨 Registration error:", err);
       toast.error("An unexpected error occurred. Please try again.");
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -135,7 +140,6 @@ const Register = () => {
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
-        {/* If SuperAdmin exists, user is redirected to login above. */}
       </div>
     </div>
   );
