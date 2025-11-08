@@ -10,7 +10,8 @@ const Login = () => {
   const navigate = useNavigate();
 
   // ✅ Use environment variable for backend URL
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const API_BASE =
+    import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -18,6 +19,7 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log("📤 Sending login request:", { email, password });
       const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -25,6 +27,7 @@ const Login = () => {
       });
 
       const data = await res.json();
+      console.log("📩 Login response:", data);
 
       if (!res.ok || !data.success) {
         throw new Error(data.message || "Invalid credentials");
@@ -34,16 +37,19 @@ const Login = () => {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.admin));
 
+      console.log("💾 Token saved:", localStorage.getItem("authToken"));
+      console.log("💼 Role:", data.admin.role);
+
       // ✅ Redirect by role
       if (data.admin.role === "SuperAdmin" || data.admin.role === "Admin") {
         toast.success("Welcome back! Redirecting...");
-        // let the toast show briefly before navigating
-        setTimeout(() => navigate("/admin/dashboard"), 900);
+        console.log("➡️ Navigating to /dashboard...");
+        setTimeout(() => navigate("/dashboard", { replace: true }), 900);
       } else {
         throw new Error("Unauthorized role");
       }
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("🚨 Login error:", err);
       const msg = err.message || "An unexpected error occurred";
       toast.error(msg);
       setError(msg);
