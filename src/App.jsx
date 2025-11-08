@@ -5,7 +5,7 @@ import axios from "axios";
 import AdminRoutes from "./routes/AdminRoutes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
@@ -17,13 +17,18 @@ function App() {
 
   // ✅ Check if SuperAdmin exists in backend
   useEffect(() => {
+    let isMounted = true; // prevents memory leak
     const checkSuperAdmin = async () => {
       try {
         const res = await axios.get(
           "https://admin-ship-backend.onrender.com/api/auth/check-superadmin"
         );
         console.log("✅ SuperAdmin check response:", res.data);
-        setSuperAdminExists(res.data.exists);
+
+        if (isMounted) {
+          // Use correct key from backend response
+          setSuperAdminExists(res.data.superAdminExists ?? false);
+        }
       } catch (error) {
         console.group("🚨 Error checking SuperAdmin");
         console.error("📍 Location: App.jsx -> checkSuperAdmin()");
@@ -39,11 +44,21 @@ function App() {
         }
         console.error("🧠 Full stack trace:", error.stack);
         console.groupEnd();
+
+        if (isMounted) {
+          toast.error(
+            "Could not verify SuperAdmin. Please refresh the page or check your connection."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     checkSuperAdmin();
+    return () => {
+      isMounted = false; // cleanup
+    };
   }, []);
 
   if (loading) {
@@ -57,7 +72,7 @@ function App() {
       <ToastContainer position="top-right" />
 
       <Routes>
-        {/*  Case 1: No SuperAdmin yet → only allow Register page */}
+        {/* Case 1: No SuperAdmin yet → only allow Register page */}
         {!superAdminExists ? (
           <>
             <Route path="/" element={<Register />} />
@@ -65,7 +80,7 @@ function App() {
           </>
         ) : (
           <>
-            {/* 🟦 Case 2: SuperAdmin exists */}
+            {/* Case 2: SuperAdmin exists */}
 
             {/* 🔐 Login Page */}
             <Route
@@ -93,7 +108,7 @@ function App() {
               }
             />
 
-            {/* Default Redirects */}
+            {/* Default redirect from root */}
             <Route
               path="/"
               element={
