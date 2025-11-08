@@ -22,9 +22,23 @@ function App() {
         const res = await axios.get(
           "https://admin-ship-backend.onrender.com/api/auth/check-superadmin"
         );
+        console.log("✅ SuperAdmin check response:", res.data);
         setSuperAdminExists(res.data.exists);
       } catch (error) {
-        console.error("Error checking SuperAdmin:", error);
+        console.group("🚨 Error checking SuperAdmin");
+        console.error("📍 Location: App.jsx -> checkSuperAdmin()");
+        console.error("🧾 Error message:", error.message);
+        if (error.response) {
+          console.error("📦 Response data:", error.response.data);
+          console.error("🔢 Status code:", error.response.status);
+          console.error("🔗 Endpoint:", error.config?.url);
+        } else if (error.request) {
+          console.error("📡 No response received:", error.request);
+        } else {
+          console.error("❗ Axios setup error:", error);
+        }
+        console.error("🧠 Full stack trace:", error.stack);
+        console.groupEnd();
       } finally {
         setLoading(false);
       }
