@@ -129,7 +129,7 @@ const ResetPassword = () => {
           </p>
         </div>
 
-  <form onSubmit={handleSubmit} className="space-y-5" autoComplete="on">
+        <form onSubmit={handleSubmit} className="space-y-5" autoComplete="on">
           {/* Password Field */}
           <div className="relative">
             <label className="block text-gray-700 font-medium mb-1">

@@ -18,23 +18,25 @@ const Register = () => {
     const checkSuperAdmin = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/admin/check-superadmin`, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         });
-        
+
         if (!res.ok) {
-          throw new Error('Failed to check SuperAdmin status');
+          throw new Error("Failed to check SuperAdmin status");
         }
-        
+
         const data = await res.json();
         if (data.superAdminExists) {
           navigate("/login");
         }
       } catch (err) {
         console.error("Error checking SuperAdmin:", err);
-        toast.error("Error connecting to server. Please check your connection and try again.");
+        toast.error(
+          "Error connecting to server. Please check your connection and try again."
+        );
         setError("Server connection error. Please refresh the page.");
       }
     };
@@ -62,7 +64,9 @@ const Register = () => {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        toast.success("🎉 Super Admin registered successfully! Redirecting to login...");
+        toast.success(
+          "🎉 Super Admin registered successfully! Redirecting to login..."
+        );
         // give the toast a moment to show before navigating
         setTimeout(() => navigate("/login"), 1400);
       } else {
@@ -85,53 +89,53 @@ const Register = () => {
           Super Admin Registration
         </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
-            <input
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              autoComplete="name"
-              className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
-            />
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            autoComplete="name"
+            className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
+          />
 
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              autoComplete="email"
-              className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
-            />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            autoComplete="email"
+            className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
+          />
 
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              autoComplete="new-password"
-              className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
-            />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            autoComplete="new-password"
+            className="w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-400"
+          />
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-2 rounded-md text-white font-semibold transition ${
-                loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-700 hover:bg-blue-800"
-              }`}
-            >
-              {loading ? "Registering..." : "Register"}
-            </button>
-          </form>
-  {/* If SuperAdmin exists, user is redirected to login above. */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-2 rounded-md text-white font-semibold transition ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-700 hover:bg-blue-800"
+            }`}
+          >
+            {loading ? "Registering..." : "Register"}
+          </button>
+        </form>
+        {/* If SuperAdmin exists, user is redirected to login above. */}
       </div>
     </div>
   );

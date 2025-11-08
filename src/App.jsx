@@ -20,7 +20,7 @@ function App() {
     const checkSuperAdmin = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:4000/api/auth/check-superadmin"
+          "https://admin-ship-backend.onrender.com/api/auth/check-superadmin"
         );
         setSuperAdminExists(res.data.exists);
       } catch (error) {
@@ -40,10 +40,10 @@ function App() {
 
   return (
     <BrowserRouter>
-  <ToastContainer position="top-right" />
+      <ToastContainer position="top-right" />
 
       <Routes>
-        {/* 🟩 Case 1: No SuperAdmin yet → only allow Register page */}
+        {/*  Case 1: No SuperAdmin yet → only allow Register page */}
         {!superAdminExists ? (
           <>
             <Route path="/" element={<Register />} />
@@ -59,7 +59,7 @@ function App() {
               element={token ? <Navigate to="/dashboard" replace /> : <Login />}
             />
 
-            {/* 👑 Register Page (only visible to logged-in SuperAdmin) */}
+            {/* Register Page (only visible to logged-in SuperAdmin) */}
             <Route
               path="/register"
               element={
@@ -71,7 +71,7 @@ function App() {
               }
             />
 
-            {/* 🧭 Protected Admin Routes */}
+            {/* Protected Admin Routes */}
             <Route
               path="/*"
               element={

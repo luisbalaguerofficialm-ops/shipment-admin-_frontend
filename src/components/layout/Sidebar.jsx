@@ -104,7 +104,7 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-blue-700 text-sm text-blue-100">
-          © 2025 Online Courier
+          © 2025 Online Shipment/Courier
         </div>
       </aside>
 
