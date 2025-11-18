@@ -7,11 +7,11 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState("");
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("admin"));
-    if (saved) {
-      setAdmin(saved);
-      setRole(saved.role);
-    }
+    const savedAdmin = JSON.parse(localStorage.getItem("admin"));
+    const savedRole = localStorage.getItem("role");
+
+    if (savedAdmin) setAdmin(savedAdmin);
+    if (savedRole) setRole(savedRole);
   }, []);
 
   const loginAdmin = (data) => {

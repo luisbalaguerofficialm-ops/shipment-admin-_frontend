@@ -50,6 +50,8 @@ export default function Sidebar() {
     { name: "Settings", icon: Settings },
   ];
 
+    console.log("ROLE FROM AUTH:", role);
+
   return (
     <>
       {/* Mobile Toggle */}
