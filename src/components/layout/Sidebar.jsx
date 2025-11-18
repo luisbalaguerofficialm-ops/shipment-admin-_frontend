@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -25,11 +25,15 @@ import {
 export default function Sidebar() {
   const [active, setActive] = useState("Dashboard");
   const [isOpen, setIsOpen] = useState(false);
-  const { role } = useAuth(); // 🔥 Gets live role instantly
+  const { role } = useAuth(); // 🔥 live role
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
-  // 👇 Updated: Users page visible for both SuperAdmin + Admin
+  // Log the role whenever it changes
+  useEffect(() => {
+    console.log("ROLE FROM AUTH (Sidebar):", role);
+  }, [role]);
+
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "Shipments", icon: Package },
@@ -49,8 +53,6 @@ export default function Sidebar() {
     { name: "Admin Profile", icon: UserCircle2 },
     { name: "Settings", icon: Settings },
   ];
-
-    console.log("ROLE FROM AUTH:", role);
 
   return (
     <>
@@ -103,6 +105,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
+      {/* Mobile overlay */}
       {isOpen && (
         <div
           onClick={toggleSidebar}
