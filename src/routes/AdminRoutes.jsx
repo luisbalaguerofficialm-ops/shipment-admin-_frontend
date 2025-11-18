@@ -41,11 +41,11 @@ export default function AdminRoutes() {
           }
         />
 
-        {/*  Only SuperAdmin can access Users page */}
+        {/*  Only SuperAdmin and admin can access Users page */}
         <Route
           path="/users"
           element={
-            <ProtectedRoute allowedRoles={["SuperAdmin"]}>
+            <ProtectedRoute allowedRoles={["SuperAdmin", "Admin"]}>
               <Users />
             </ProtectedRoute>
           }

@@ -12,6 +12,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { AuthProvider } from "./context/AuthContext";
 
+//  ScrollReveal Import
+import ScrollReveal from "scrollreveal";
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [superAdminExists, setSuperAdminExists] = useState(false);
@@ -63,9 +66,25 @@ function App() {
     };
   }, []);
 
+  // ✅ ScrollReveal Rotating Loader
+  useEffect(() => {
+    ScrollReveal().reveal("#app-loading-spinner", {
+      rotate: { x: 0, y: 0, z: 360 },
+      duration: 1200,
+      easing: "ease-in-out",
+      reset: true,
+    });
+  }, []);
+
+  // ⏳ Loading Screen (Rotating)
   if (loading) {
     return (
-      <div className="text-center mt-10 text-lg font-semibold">Loading...</div>
+      <div
+        id="app-loading-spinner"
+        className="flex justify-center items-center h-screen"
+      >
+        <span className="text-lg font-semibold">Loading...</span>
+      </div>
     );
   }
 

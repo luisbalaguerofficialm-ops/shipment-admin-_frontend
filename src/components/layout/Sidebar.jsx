@@ -25,14 +25,17 @@ import {
 export default function Sidebar() {
   const [active, setActive] = useState("Dashboard");
   const [isOpen, setIsOpen] = useState(false);
-  const { role } = useAuth(); // 🔥 role updates instantly
+  const { role } = useAuth(); // 🔥 Gets live role instantly
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
+  // 👇 Updated: Users page visible for both SuperAdmin + Admin
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "Shipments", icon: Package },
-    ...(role === "SuperAdmin" ? [{ name: "Users", icon: Users }] : []),
+    ...(role === "SuperAdmin" || role === "Admin"
+      ? [{ name: "Users", icon: Users }]
+      : []),
     { name: "Customers", icon: UsersRound },
     { name: "Payments", icon: CreditCard },
     { name: "Reports", icon: BarChart3 },
@@ -49,6 +52,7 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Mobile Toggle */}
       <button
         onClick={toggleSidebar}
         className="md:hidden fixed top-4 left-4 z-50 bg-blue-700 p-2 rounded-lg text-white"
@@ -56,9 +60,10 @@ export default function Sidebar() {
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
+      {/* Sidebar */}
       <aside
         className={`fixed md:static top-0 left-0 h-full w-64 bg-blue-800 text-white flex flex-col transform transition-transform duration-300 z-40
-          ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="px-6 py-6 text-2xl font-bold border-b border-blue-700">
           Online Admin
@@ -67,6 +72,7 @@ export default function Sidebar() {
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {menuItems.map(({ name, icon: Icon }) => {
             const path = name.toLowerCase().replace(/\s+/g, "-");
+
             return (
               <NavLink
                 key={name}
