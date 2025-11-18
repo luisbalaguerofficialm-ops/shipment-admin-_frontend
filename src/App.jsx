@@ -1,3 +1,4 @@
+// src/App.jsx
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -15,11 +16,14 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 // ScrollReveal Import
 import ScrollReveal from "scrollreveal";
 
+// Loader image
+import loaderImg from "./assets/Shipping-company-logo (1).jpg";
+
 function AppContent() {
   const [loading, setLoading] = useState(true);
   const [superAdminExists, setSuperAdminExists] = useState(false);
 
-  const { role } = useAuth(); // ✅ role from AuthContext
+  const { role } = useAuth(); //  role from AuthContext
   const token = localStorage.getItem("authToken");
 
   // Check SuperAdmin on load
@@ -37,7 +41,6 @@ function AppContent() {
         }
       } catch (error) {
         console.error("Error checking super admin:", error);
-
         if (isMounted) {
           toast.error("Unable to verify Super Admin. Please refresh.");
         }
@@ -52,29 +55,29 @@ function AppContent() {
     };
   }, []);
 
-  // ScrollReveal Rotating Loader
+  // ScrollReveal for page sections (optional)
   useEffect(() => {
-    ScrollReveal().reveal("#app-loading-spinner", {
-      rotate: { x: 0, y: 0, z: 360 },
-      duration: 1200,
+    ScrollReveal().reveal(".sr", {
+      origin: "bottom",
+      distance: "20px",
+      duration: 800,
       easing: "ease-in-out",
       reset: true,
     });
   }, []);
 
-  // Loading Screen (Rotating)
+  // Full-page loader
   if (loading) {
     return (
-      <div
-        id="app-loading-spinner"
-        className="flex justify-center items-center h-screen"
-      >
-        <span className="text-lg font-semibold animate-spin">Loading...</span>
+      <div className="flex justify-center items-center h-screen bg-white">
+        <img
+          src={loaderImg}
+          alt="Loading..."
+          className="w-16 h-16 animate-spin-smooth"
+        />
       </div>
     );
   }
-
-  console.log("ROLE FROM AUTH (App):", role);
 
   return (
     <BrowserRouter>
@@ -112,18 +115,6 @@ function AppContent() {
               path="/*"
               element={
                 token ? <AdminRoutes /> : <Navigate to="/login" replace />
-              }
-            />
-
-            {/* Default redirect */}
-            <Route
-              path="/"
-              element={
-                token ? (
-                  <Navigate to="/dashboard" replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
               }
             />
           </>
