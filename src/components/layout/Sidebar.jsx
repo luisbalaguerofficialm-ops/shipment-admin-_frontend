@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import {
   LayoutDashboard,
   Package,
@@ -23,23 +25,13 @@ import {
 export default function Sidebar() {
   const [active, setActive] = useState("Dashboard");
   const [isOpen, setIsOpen] = useState(false);
-  const [role, setRole] = useState("");
-
-  useEffect(() => {
-    // ✅ Get the logged-in admin's role from localStorage
-    const storedAdmin = JSON.parse(localStorage.getItem("admin"));
-    if (storedAdmin && storedAdmin.role) {
-      setRole(storedAdmin.role);
-    }
-  }, []);
+  const { role } = useAuth(); // 🔥 role updates instantly
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
-  // ✅ Menu items definition
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard },
     { name: "Shipments", icon: Package },
-    // 👇 Hide "Users" unless SuperAdmin
     ...(role === "SuperAdmin" ? [{ name: "Users", icon: Users }] : []),
     { name: "Customers", icon: UsersRound },
     { name: "Payments", icon: CreditCard },
@@ -57,25 +49,21 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* 🔹 Mobile toggle button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 left-4 z-50 bg-blue-700 p-2 rounded-lg text-white focus:outline-none"
+        className="md:hidden fixed top-4 left-4 z-50 bg-blue-700 p-2 rounded-lg text-white"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* 🔹 Sidebar container */}
       <aside
         className={`fixed md:static top-0 left-0 h-full w-64 bg-blue-800 text-white flex flex-col transform transition-transform duration-300 z-40
           ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-        {/* Header / Logo */}
         <div className="px-6 py-6 text-2xl font-bold border-b border-blue-700">
           Online Admin
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {menuItems.map(({ name, icon: Icon }) => {
             const path = name.toLowerCase().replace(/\s+/g, "-");
@@ -85,7 +73,7 @@ export default function Sidebar() {
                 to={`/${path}`}
                 onClick={() => {
                   setActive(name);
-                  setIsOpen(false); // close on mobile
+                  setIsOpen(false);
                 }}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition ${
@@ -102,13 +90,11 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-blue-700 text-sm text-blue-100">
           © 2025 Online Shipment/Courier
         </div>
       </aside>
 
-      {/* 🔹 Background overlay when sidebar is open on mobile */}
       {isOpen && (
         <div
           onClick={toggleSidebar}
