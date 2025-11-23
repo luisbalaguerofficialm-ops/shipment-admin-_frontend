@@ -84,30 +84,25 @@ function AppContent() {
       <ToastContainer position="top-right" />
 
       <Routes>
-        {/* CASE 1: No SuperAdmin exists → Only show Register */}
+        {/* CASE 1: No SuperAdmin exists → Only allow registration */}
         {!superAdminExists ? (
           <>
-            <Route path="/" element={<Register />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<Navigate to="/register" replace />} />
           </>
         ) : (
           <>
+            {/* CASE 2: SuperAdmin exists */}
+            {/* Redirect /register to /login immediately */}
+            <Route
+              path="/register"
+              element={<Navigate to="/login" replace />}
+            />
+
             {/* Login */}
             <Route
               path="/login"
               element={token ? <Navigate to="/dashboard" replace /> : <Login />}
-            />
-
-            {/* Register (SuperAdmin only) */}
-            <Route
-              path="/register"
-              element={
-                token && role === "SuperAdmin" ? (
-                  <Register />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
             />
 
             {/* Protected Admin Routes */}

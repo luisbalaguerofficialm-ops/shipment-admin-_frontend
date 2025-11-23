@@ -1,18 +1,19 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Eye, EyeOff, Loader2 } from "lucide-react"; // 👈 icons
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // 👈 toggle state
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const API_BASE =
-    import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com";
+  // Direct backend URL
+  const API_BASE = "https://admin-ship-backend.onrender.com";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,15 +21,15 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/login`, {
+      const response = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (!res.ok || !data.success) {
+      if (!response.ok || !data.success) {
         throw new Error(data.message || "Invalid email or password");
       }
 
@@ -37,10 +38,9 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(data.admin));
       localStorage.setItem("role", data.admin.role);
 
-      // Trigger App.jsx to re-render instantly
-      window.dispatchEvent(new Event("storage"));
+      toast.success("Login successful! Redirecting to dashboard...");
 
-      toast.success("Welcome back! Redirecting...");
+      // Redirect immediately to dashboard
       navigate("/dashboard", { replace: true });
     } catch (err) {
       const message = err.message || "Login failed";
@@ -67,7 +67,6 @@ const Login = () => {
           </div>
         )}
 
-        {/* Email */}
         <input
           type="email"
           value={email}
@@ -78,7 +77,6 @@ const Login = () => {
           required
         />
 
-        {/* Password + Eye Toggle */}
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -89,7 +87,6 @@ const Login = () => {
             className="w-full border border-gray-300 rounded-lg p-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
@@ -99,7 +96,6 @@ const Login = () => {
           </button>
         </div>
 
-        {/* Login Button + Spinner */}
         <button
           type="submit"
           disabled={loading}

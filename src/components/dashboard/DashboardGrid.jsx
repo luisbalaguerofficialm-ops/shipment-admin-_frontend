@@ -1,10 +1,11 @@
+// src/components/DashboardGrid.jsx
 import { useEffect, useState } from "react";
 import StatsCard from "./StatsCard";
 import { Package, Users, CreditCard, BarChart3 } from "lucide-react";
 import io from "socket.io-client";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com";
+// Direct backend URL
+const API_URL = "https://admin-ship-backend.onrender.com";
 
 export default function DashboardGrid() {
   const [stats, setStats] = useState({
@@ -18,13 +19,25 @@ export default function DashboardGrid() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/dashboard`);
-        const data = await res.json();
-        if (data.success) setStats(data.stats);
+        const response = await fetch(`${API_URL}/api/dashboard`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          setStats(data.stats);
+        } else {
+          console.error("Failed to fetch dashboard stats:", data.message);
+        }
       } catch (err) {
         console.error("Failed to fetch dashboard stats:", err);
       }
     };
+
     fetchStats();
   }, []);
 

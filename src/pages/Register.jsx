@@ -1,7 +1,8 @@
-// Last updated: 2025-11-08 — Fixed navigation race condition and improved logging
-import React, { useState, useEffect } from "react";
+// src/pages/Register.jsx
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -9,97 +10,46 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ Use deployed backend URL from .env or fallback
-  const API_BASE =
-    import.meta.env.VITE_API_URL || "https://admin-ship-backend.onrender.com";
-
-  // ✅ Check if a SuperAdmin already exists
-  useEffect(() => {
-    let isMounted = true; // prevents React state updates after unmount
-    const checkSuperAdmin = async () => {
-      try {
-        console.log(
-          "🔍 Checking SuperAdmin status from:",
-          `${API_BASE}/api/admin/check-superadmin`
-        );
-        const res = await fetch(`${API_BASE}/api/admin/check-superadmin`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error(`Server returned ${res.status}`);
-        }
-
-        const data = await res.json();
-        console.log("✅ SuperAdmin check response:", data);
-
-        if (isMounted && data.superAdminExists) {
-          console.log("➡️ SuperAdmin already exists — navigating to /login...");
-          // Wait a tiny bit to let DOM settle before navigating
-          setTimeout(() => {
-            console.log("⚙️ Triggering navigate('/login') now...");
-            navigate("/login", { replace: true });
-          }, 500);
-        }
-      } catch (err) {
-        console.error("🚨 Error checking SuperAdmin:", err);
-        if (isMounted) {
-          toast.error("Could not verify SuperAdmin. Please try again.");
-          setError("Connection error — please refresh the page.");
-        }
-      }
-    };
-
-    checkSuperAdmin();
-    return () => {
-      // prevent memory leak warning
-      isMounted = false;
-    };
-  }, [navigate, API_BASE]);
-
-  // ✅ Handle input changes
+  // Handle input changes
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle registration
+  // Handle registration
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      console.log(
-        "📤 Sending registration request to:",
-        `${API_BASE}/api/admin/register`
+      const response = await fetch(
+        "https://admin-ship-backend.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
       );
-      const res = await fetch(`${API_BASE}/api/admin/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
 
-      const data = await res.json();
-      console.log("📩 Registration response:", data);
+      const data = await response.json();
 
-      if (res.ok && data.success) {
-        toast.success(
-          "🎉 Super Admin registered successfully! Redirecting to login..."
-        );
-        console.log("✅ Registration successful, navigating to /login...");
-        setTimeout(() => navigate("/login", { replace: true }), 1500);
-      } else {
-        toast.error(data.message || "Registration failed.");
-        setError(data.message || "Registration failed.");
-        console.error("❌ Registration failed:", data);
+      if (!response.ok) {
+        toast.error(data.message || "Registration failed");
+        setError(data.message || "Registration failed");
+        return;
       }
+
+      // Optionally store token if backend returns it
+      if (data.token) localStorage.setItem("authToken", data.token);
+
+      toast.success(
+        "Super Admin registered successfully! Redirecting to login..."
+      );
+      navigate("/login", { replace: true }); // immediate redirect
     } catch (err) {
-      console.error("🚨 Registration error:", err);
-      toast.error("An unexpected error occurred. Please try again.");
-      setError("Unexpected error occurred. Please try again.");
+      console.error(err);
+      toast.error("Something went wrong. Please try again.");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
