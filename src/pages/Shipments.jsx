@@ -1,5 +1,4 @@
-// ...existing code...
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import {
   Search,
@@ -12,81 +11,216 @@ import {
   PackageCheck,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 const Shipments = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [shipments, setShipments] = useState([]);
+
   const [showNewShipmentModal, setShowNewShipmentModal] = useState(false);
+  const [showEditShipmentModal, setShowEditShipmentModal] = useState(false);
+  const [editShipmentIndex, setEditShipmentIndex] = useState(null);
+  const [editShipment, setEditShipment] = useState(null);
+
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackedShipment, setTrackedShipment] = useState(null);
   const [notFound, setNotFound] = useState(false);
 
-  // manage shipments in state so edit/delete persist in UI
-  const [shipments, setShipments] = useState([
-    {
-      trackingNumber: "TRK-903481",
-      senderName: "John Doe",
-      senderPhone: "09012345678",
-      senderEmail: "john@example.com",
-      senderAddress: "Lagos, Nigeria",
-      receiverName: "Mary Johnson",
-      receiverPhone: "08099998888",
-      receiverEmail: "mary@example.com",
-      receiverAddress: "Abuja, Nigeria",
-      packageDescription: "Electronics - Laptop",
-      weight: "2.5kg",
-      quantity: 1,
-      value: "$1,200",
-      shipmentType: "Express",
-      paymentMethod: "Prepaid",
-      currentLocation: "Lagos → Abuja",
-      deliveryStatus: "In Transit",
-      estimatedDeliveryDate: "2025-10-20",
-    },
-  ]);
+  const token = localStorage.getItem("adminToken"); // Use your auth token if required
 
-  // edit modal state
-  const [showEditShipmentModal, setShowEditShipmentModal] = useState(false);
-  const [editShipmentIndex, setEditShipmentIndex] = useState(null);
-  const [editShipment, setEditShipment] = useState(null);
+  // Fetch all shipments
+  const fetchShipments = async () => {
+    try {
+      const response = await fetch(
+        "https://admin-ship-backend.onrender.com/api/shipments",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.message || "Failed to fetch shipments");
+        return;
+      }
+      setShipments(data.shipments || []);
+    } catch (error) {
+      console.error("NETWORK ERROR:", error);
+      toast.error("Network error!");
+    }
+  };
 
-  // Filter for search bar - keep original index for actions
+  useEffect(() => {
+    fetchShipments();
+  }, []);
+
+  // Create shipment
+  const handleCreateShipment = async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const payload = {
+      senderName: form.senderName.value,
+      senderPhone: form.senderPhone.value,
+      senderEmail: form.senderEmail.value,
+      senderAddress: form.senderAddress.value,
+      receiverName: form.receiverName.value,
+      receiverPhone: form.receiverPhone.value,
+      receiverEmail: form.receiverEmail.value,
+      receiverAddress: form.receiverAddress.value,
+      packageDescription: form.packageDescription.value,
+      weight: form.weight.value,
+      quantity: Number(form.quantity.value),
+      value: form.value.value,
+      shipmentType: form.shipmentType.value,
+      paymentMethod: form.paymentMethod.value,
+      currentLocation: form.currentLocation.value,
+      deliveryStatus: form.deliveryStatus.value,
+      estimatedDeliveryDate: form.estimatedDeliveryDate.value,
+    };
+
+    try {
+      const response = await fetch(
+        "https://admin-ship-backend.onrender.com/api/shipments",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.message || "Failed to create shipment");
+        return;
+      }
+      setShipments((prev) => [data.shipment, ...prev]);
+      toast.success("Shipment created successfully!");
+      setShowNewShipmentModal(false);
+      form.reset();
+    } catch (error) {
+      console.error("NETWORK ERROR:", error);
+      toast.error("Network error!");
+    }
+  };
+
+  // Update shipment
+  const handleUpdateShipment = async (e) => {
+    e.preventDefault();
+    if (!editShipmentIndex || !editShipment) return;
+
+    try {
+      const response = await fetch(
+        `https://admin-ship-backend.onrender.com/api/shipments/${editShipment._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(editShipment),
+        }
+      );
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.message || "Failed to update shipment");
+        return;
+      }
+
+      setShipments((prev) =>
+        prev.map((s) => (s._id === data.shipment._id ? data.shipment : s))
+      );
+      toast.success("Shipment updated successfully!");
+      setShowEditShipmentModal(false);
+      setEditShipmentIndex(null);
+      setEditShipment(null);
+    } catch (error) {
+      console.error("NETWORK ERROR:", error);
+      toast.error("Network error!");
+    }
+  };
+
+  // Delete shipment
+  const handleDeleteShipment = async (index) => {
+    const shipment = shipments[index];
+    const confirmed = window.confirm(
+      `Delete shipment ${shipment.trackingNumber}? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `https://admin-ship-backend.onrender.com/api/shipments/${shipment._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.message || "Failed to delete shipment");
+        return;
+      }
+
+      setShipments((prev) => prev.filter((_, i) => i !== index));
+      toast.success("Shipment deleted successfully!");
+      if (showEditShipmentModal && editShipmentIndex === index) {
+        setShowEditShipmentModal(false);
+        setEditShipmentIndex(null);
+        setEditShipment(null);
+      }
+    } catch (error) {
+      console.error("NETWORK ERROR:", error);
+      toast.error("Network error!");
+    }
+  };
+
+  // Track shipment
+  const handleTrackShipment = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(
+        `https://admin-ship-backend.onrender.com/api/track/${trackingNumber}`
+      );
+      const data = await response.json();
+      if (!data.success) {
+        setTrackedShipment(null);
+        setNotFound(true);
+        toast.error(data.message || "Shipment not found");
+        return;
+      }
+      setTrackedShipment(data.shipment);
+      setNotFound(false);
+      toast.success("Shipment found!");
+    } catch (error) {
+      console.error("NETWORK ERROR:", error);
+      toast.error("Network error!");
+    }
+  };
+
   const filteredShipments = shipments
     .map((s, i) => ({ ...s, _idx: i }))
     .filter(
       (ship) =>
         ship.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ship.senderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ship.receiverName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ship.deliveryStatus.toLowerCase().includes(searchTerm.toLowerCase())
+        (ship.senderName &&
+          ship.senderName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (ship.receiverName &&
+          ship.receiverName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (ship.deliveryStatus &&
+          ship.deliveryStatus.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-  // Restrict number-only input
-  const handleNumberInput = (e) => {
-    e.target.value = e.target.value.replace(/\D/g, "");
-  };
-
-  // Track shipment search handler
-  const handleTrackShipment = (e) => {
-    e.preventDefault();
-    const found = shipments.find(
-      (ship) =>
-        ship.trackingNumber.toLowerCase() === trackingNumber.toLowerCase()
-    );
-
-    if (found) {
-      setTrackedShipment(found);
-      setNotFound(false);
-    } else {
-      setTrackedShipment(null);
-      setNotFound(true);
-    }
-  };
-
-  // start editing - open modal and copy data
   const handleStartEdit = (index) => {
     setEditShipmentIndex(index);
-    setEditShipment({ ...shipments[index] });
+    setEditShipment({ ...filteredShipments[index] });
     setShowEditShipmentModal(true);
   };
 
@@ -94,50 +228,22 @@ const Shipments = () => {
     setEditShipment((prev) => ({ ...prev, ...patch }));
   };
 
-  const handleUpdateShipment = (e) => {
-    e.preventDefault();
-    if (editShipmentIndex === null) return;
-    setShipments((prev) => {
-      const copy = [...prev];
-      copy[editShipmentIndex] = { ...editShipment };
-      return copy;
-    });
-    setShowEditShipmentModal(false);
-    setEditShipmentIndex(null);
-    setEditShipment(null);
-  };
-
-  const handleDeleteShipment = (index) => {
-    const ship = shipments[index];
-    const confirmed = window.confirm(
-      `Delete shipment ${ship.trackingNumber}? This action cannot be undone.`
-    );
-    if (!confirmed) return;
-    setShipments((prev) => prev.filter((_, i) => i !== index));
-    // close edit modal if currently editing the deleted one
-    if (showEditShipmentModal && editShipmentIndex === index) {
-      setShowEditShipmentModal(false);
-      setEditShipmentIndex(null);
-      setEditShipment(null);
-    }
+  const handleNumberInput = (e) => {
+    e.target.value = e.target.value.replace(/\D/g, "");
   };
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
-      {/* ===== HEADER ===== */}
+      {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Shipments</h1>
-
         <div className="flex gap-3">
-          {/* TRACK SHIPMENT BUTTON */}
           <button
             onClick={() => setShowTrackingModal(true)}
             className="bg-green-600 text-white flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-green-700 transition"
           >
             <PackageSearch size={18} /> Track Shipment
           </button>
-
-          {/* NEW SHIPMENT BUTTON */}
           <button
             onClick={() => setShowNewShipmentModal(true)}
             className="bg-blue-700 text-white flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-blue-800 transition"
@@ -147,7 +253,7 @@ const Shipments = () => {
         </div>
       </div>
 
-      {/* ===== SEARCH + TABLE ===== */}
+      {/* SEARCH + TABLE */}
       <Card className="shadow-md bg-white border border-gray-200">
         <CardContent className="p-4">
           <div className="flex justify-between items-center mb-4">
@@ -176,7 +282,6 @@ const Shipments = () => {
                   <th className="p-3 border-b text-center">Actions</th>
                 </tr>
               </thead>
-
               <tbody>
                 {filteredShipments.length > 0 ? (
                   filteredShipments.map((ship) => (
@@ -231,6 +336,8 @@ const Shipments = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modals for NEW, EDIT, TRACK shipments remain; ensure they call handleCreateShipment, handleUpdateShipment, handleTrackShipment */}
 
       {/* ===== TRACK SHIPMENT MODAL ===== */}
       {showTrackingModal && (
@@ -649,4 +756,3 @@ const Shipments = () => {
 };
 
 export default Shipments;
-// ...existing code...

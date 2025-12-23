@@ -2,52 +2,59 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { Search, Filter, Clock, User, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
+import io from "socket.io-client";
 
 const AuditLogs = () => {
   const [logs, setLogs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("All");
+  const token = localStorage.getItem("authToken");
 
-  // ✅ Example Data — you can later fetch from backend
+  // Fetch initial logs from backend
   useEffect(() => {
-    const demoLogs = [
-      {
-        id: 1,
-        user: "Admin John",
-        action: "Created new shipment #SH12345",
-        time: "2025-10-15 09:45 AM",
-        ip: "192.168.0.14",
-        role: "Admin",
-      },
-      {
-        id: 2,
-        user: "Agent Sarah",
-        action: "Updated delivery status to 'Delivered'",
-        time: "2025-10-15 11:12 AM",
-        ip: "192.168.0.28",
-        role: "Agent",
-      },
-      {
-        id: 3,
-        user: "Finance Tom",
-        action: "Processed payment for shipment #SH12340",
-        time: "2025-10-15 12:05 PM",
-        ip: "192.168.0.30",
-        role: "Finance",
-      },
-      {
-        id: 4,
-        user: "Super Admin",
-        action: "Revoked access from user Agent Mike",
-        time: "2025-10-16 08:10 AM",
-        ip: "192.168.0.1",
-        role: "Super Admin",
-      },
-    ];
-    setLogs(demoLogs);
-  }, []);
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch(
+          "https://admin-ship-backend.onrender.com/api/audits",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.message || "Failed to fetch audit logs");
+          return;
+        }
+        setLogs(data.logs || []);
+      } catch (err) {
+        console.error(err);
+        toast.error("Network error! Could not fetch audit logs.");
+      }
+    };
+    fetchLogs();
+  }, [token]);
 
-  // ✅ Filtered + Searched Logs
+  // Real-time updates via Socket.IO
+  useEffect(() => {
+    const socket = io("https://admin-ship-backend.onrender.com", {
+      transports: ["websocket"],
+      auth: { token },
+    });
+
+    console.log("📡 Connected to audit log socket");
+
+    socket.on("audit:new", (newLog) => {
+      setLogs((prev) => [newLog, ...prev]); // Add newest logs at the top
+      toast.success("📢 New audit log recorded");
+    });
+
+    return () => {
+      socket.disconnect();
+      console.log("🔌 Audit log socket disconnected");
+    };
+  }, [token]);
+
+  // Filtered + searched logs
   const filteredLogs = logs.filter(
     (log) =>
       (filter === "All" || log.role === filter) &&
@@ -56,14 +63,12 @@ const AuditLogs = () => {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <h1 className="text-2xl font-semibold text-gray-800">Audit Logs</h1>
 
       <Card className="shadow-md bg-white border border-gray-200">
         <CardContent className="p-6 space-y-6">
-          {/* 🔍 Search & Filter */}
+          {/* Search & Filter */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            {/* Search */}
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 w-full sm:w-1/2">
               <Search size={18} className="text-gray-500 mr-2" />
               <input
@@ -75,7 +80,6 @@ const AuditLogs = () => {
               />
             </div>
 
-            {/* Filter */}
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
               <Filter size={18} className="text-gray-500 mr-2" />
               <select
@@ -92,7 +96,7 @@ const AuditLogs = () => {
             </div>
           </div>
 
-          {/* 🧾 Logs Table */}
+          {/* Logs Table */}
           <div className="overflow-x-auto mt-4">
             <table className="min-w-full text-sm border border-gray-200">
               <thead className="bg-gray-100 text-gray-700">
@@ -139,7 +143,7 @@ const AuditLogs = () => {
             </table>
           </div>
 
-          {/* 🔁 Clear Filter Button */}
+          {/* Clear Filter Button */}
           <div className="flex justify-end pt-4">
             <button
               onClick={() => {

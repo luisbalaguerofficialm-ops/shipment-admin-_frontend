@@ -13,9 +13,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// ScrollReveal Import
-import ScrollReveal from "scrollreveal";
-
 // Loader image
 import loaderImg from "./assets/Shipping-company-logo (1).jpg";
 
@@ -33,7 +30,7 @@ function AppContent() {
     const checkSuperAdmin = async () => {
       try {
         const res = await axios.get(
-          "https://admin-ship-backend.onrender.com/api/auth/check-superadmin"
+          "https://admin-ship-backend.onrender.com/api/admin/auth/check-superadmin"
         );
 
         if (isMounted) {
@@ -53,17 +50,6 @@ function AppContent() {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  // ScrollReveal for page sections (optional)
-  useEffect(() => {
-    ScrollReveal().reveal(".sr", {
-      origin: "bottom",
-      distance: "20px",
-      duration: 800,
-      easing: "ease-in-out",
-      reset: true,
-    });
   }, []);
 
   // Full-page loader

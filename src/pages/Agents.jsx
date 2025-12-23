@@ -1,5 +1,4 @@
-// ...existing code...
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import {
   User,
@@ -15,33 +14,7 @@ import {
 import toast from "react-hot-toast";
 
 const Agents = () => {
-  const [agents, setAgents] = useState([
-    {
-      id: 1,
-      name: "Samuel Johnson",
-      email: "samuel.johnson@courier.com",
-      phone: "+2348035552211",
-      branch: "Lagos Main Branch",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Grace Adams",
-      email: "grace.adams@courier.com",
-      phone: "+2348081123377",
-      branch: "Abuja Sorting Hub",
-      status: "Inactive",
-    },
-    {
-      id: 3,
-      name: "Ibrahim Musa",
-      email: "ibrahim.musa@courier.com",
-      phone: "+2348093336655",
-      branch: "Port Harcourt Delivery Center",
-      status: "Active",
-    },
-  ]);
-
+  const [agents, setAgents] = useState([]); // no demo data
   const [newAgent, setNewAgent] = useState({
     name: "",
     email: "",
@@ -49,74 +22,153 @@ const Agents = () => {
     branch: "",
     status: "Active",
   });
-
-  // edit modal state
-  const [editingAgent, setEditingAgent] = useState(null); // null or agent object
+  const [editingAgent, setEditingAgent] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const handleAddAgent = () => {
+  const token = localStorage.getItem("authToken");
+
+  // Fetch agents from backend on mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const res = await fetch(
+          "https://admin-ship-backend.onrender.com/api/agents",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.message || "Failed to fetch agents");
+          return;
+        }
+        setAgents(data.agents || []);
+      } catch (err) {
+        console.error(err);
+        toast.error("Network error! Could not fetch agents.");
+      }
+    };
+    fetchAgents();
+  }, [token]);
+
+  const handleAddAgent = async () => {
     if (
       !newAgent.name ||
       !newAgent.email ||
       !newAgent.phone ||
-      !newAgent.branch ||
-      !newAgent.status
+      !newAgent.branch
     ) {
       toast.error("Please fill in all agent details!");
       return;
     }
 
-    const newEntry = {
-      id: Date.now(),
-      ...newAgent,
-    };
+    try {
+      const res = await fetch(
+        "https://admin-ship-backend.onrender.com/api/agents",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newAgent),
+        }
+      );
 
-    setAgents((prev) => [...prev, newEntry]);
-    setNewAgent({
-      name: "",
-      email: "",
-      phone: "",
-      branch: "",
-      status: "Active",
-    });
-    toast.success("New agent added successfully!");
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to add agent");
+        return;
+      }
+
+      setAgents((prev) => [...prev, data.agent]);
+      setNewAgent({
+        name: "",
+        email: "",
+        phone: "",
+        branch: "",
+        status: "Active",
+      });
+      toast.success("New agent added successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error! Could not add agent.");
+    }
   };
 
   const handleEditClick = (agent) => {
-    // clone to avoid mutating original until save
     setEditingAgent({ ...agent });
     setShowEditModal(true);
   };
 
-  const handleDelete = (id) => {
-    if (!confirm("Delete this agent? This action cannot be undone.")) return;
-    setAgents((prev) => prev.filter((a) => a.id !== id));
-    toast.success("Agent deleted.");
-    // close edit modal if deleted agent was being edited
-    if (editingAgent && editingAgent.id === id) {
-      setShowEditModal(false);
-      setEditingAgent(null);
-    }
-  };
-
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (
       !editingAgent.name ||
       !editingAgent.email ||
       !editingAgent.phone ||
-      !editingAgent.branch ||
-      !editingAgent.status
+      !editingAgent.branch
     ) {
       toast.error("Please fill in all agent fields.");
       return;
     }
 
-    setAgents((prev) =>
-      prev.map((a) => (a.id === editingAgent.id ? { ...editingAgent } : a))
-    );
-    setShowEditModal(false);
-    setEditingAgent(null);
-    toast.success("Agent updated.");
+    try {
+      const res = await fetch(
+        `https://admin-ship-backend.onrender.com/api/agents/${editingAgent.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(editingAgent),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to update agent");
+        return;
+      }
+
+      setAgents((prev) =>
+        prev.map((a) => (a.id === editingAgent.id ? data.agent : a))
+      );
+      setShowEditModal(false);
+      setEditingAgent(null);
+      toast.success("Agent updated.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error! Could not update agent.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Delete this agent? This action cannot be undone.")) return;
+
+    try {
+      const res = await fetch(
+        `https://admin-ship-backend.onrender.com/api/agents/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.message || "Failed to delete agent");
+        return;
+      }
+
+      setAgents((prev) => prev.filter((a) => a.id !== id));
+      if (editingAgent && editingAgent.id === id) {
+        setShowEditModal(false);
+        setEditingAgent(null);
+      }
+      toast.success("Agent deleted.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error! Could not delete agent.");
+    }
   };
 
   const handleCancelEdit = () => {
@@ -382,4 +434,3 @@ const Agents = () => {
 };
 
 export default Agents;
-// ...existing code...

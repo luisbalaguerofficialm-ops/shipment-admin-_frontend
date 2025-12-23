@@ -23,7 +23,7 @@ const Register = () => {
 
     try {
       const response = await fetch(
-        "https://admin-ship-backend.onrender.com/api/auth/register",
+        "https://admin-ship-backend.onrender.com/api/admin/auth/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

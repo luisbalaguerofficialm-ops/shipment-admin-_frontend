@@ -20,48 +20,7 @@ const TrackingLog = () => {
   const [filter, setFilter] = useState("all");
   const [selectedShipment, setSelectedShipment] = useState(null);
 
-  const [shipments, setShipments] = useState([
-    {
-      id: "TRK1001",
-      customer: "James Smith",
-      status: "Delivered",
-      lastUpdate: "2025-10-15 10:45 AM",
-      destination: "Lagos, NG",
-      origin: "London, UK",
-      route: ["London", "Paris", "Abuja", "Lagos"],
-      estimatedDelivery: "2025-10-15",
-    },
-    {
-      id: "TRK1002",
-      customer: "Maria Johnson",
-      status: "In Transit",
-      lastUpdate: "2025-10-16 2:10 PM",
-      destination: "Abuja, NG",
-      origin: "Berlin, DE",
-      route: ["Berlin", "Rome", "Accra", "Abuja"],
-      estimatedDelivery: "2025-10-19",
-    },
-    {
-      id: "TRK1003",
-      customer: "Ali Hassan",
-      status: "Pending",
-      lastUpdate: "2025-10-17 8:30 AM",
-      destination: "Kano, NG",
-      origin: "Dubai, UAE",
-      route: ["Dubai", "Addis Ababa", "Kano"],
-      estimatedDelivery: "2025-10-22",
-    },
-    {
-      id: "TRK1004",
-      customer: "Grace Okafor",
-      status: "Failed",
-      lastUpdate: "2025-10-14 6:00 PM",
-      destination: "Port Harcourt, NG",
-      origin: "New York, USA",
-      route: ["New York", "London", "Lagos", "Port Harcourt"],
-      estimatedDelivery: "2025-10-20",
-    },
-  ]);
+  const [shipments, setShipments] = useState([]);
 
   const filtered = shipments.filter(
     (s) =>

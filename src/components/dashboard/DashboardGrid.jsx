@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import StatsCard from "./StatsCard";
 import { Package, Users, CreditCard, BarChart3 } from "lucide-react";
 import io from "socket.io-client";
-
-// Direct backend URL
-const API_URL = "https://admin-ship-backend.onrender.com";
+import { toast } from "react-toastify";
 
 export default function DashboardGrid() {
   const [stats, setStats] = useState({
@@ -15,37 +13,45 @@ export default function DashboardGrid() {
     pendingDeliveries: 0,
   });
 
-  // Fetch initial stats once
+  const token = localStorage.getItem("authToken");
+
+  // Fetch initial stats
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/dashboard`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        });
+        const response = await fetch(
+          "https://admin-ship-backend.onrender.com/api/dashboard",
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         const data = await response.json();
 
-        if (response.ok && data.success) {
-          setStats(data.stats);
-        } else {
-          console.error("Failed to fetch dashboard stats:", data.message);
+        if (!response.ok || !data.success) {
+          toast.error(data.message || "Failed to fetch dashboard stats");
+          return;
         }
+
+        setStats(data.stats);
+        toast.success("Dashboard stats loaded!");
       } catch (err) {
-        console.error("Failed to fetch dashboard stats:", err);
+        console.error("NETWORK ERROR:", err);
+        toast.error("Network error while fetching dashboard stats!");
       }
     };
 
     fetchStats();
-  }, []);
+  }, [token]);
 
   // Socket.IO for real-time updates
   useEffect(() => {
-    const socket = io(API_URL, {
+    const socket = io("https://admin-ship-backend.onrender.com", {
       transports: ["websocket"],
-      auth: { token: localStorage.getItem("authToken") },
+      auth: { token },
     });
 
     console.log("📡 Connected to dashboard socket");
@@ -58,13 +64,19 @@ export default function DashboardGrid() {
         payments: data.payments,
         pendingDeliveries: data.pendingDeliveries,
       });
+      toast.info("Dashboard stats updated!");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
+      toast.error("Dashboard live updates disconnected!");
     });
 
     return () => {
       socket.disconnect();
       console.log("🔌 Dashboard socket disconnected");
     };
-  }, []);
+  }, [token]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">

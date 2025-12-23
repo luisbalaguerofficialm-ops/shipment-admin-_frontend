@@ -1,46 +1,55 @@
-// ...existing code...
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { MapPin, Phone, User, Plus, Building2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 const Branches = () => {
-  const [branches, setBranches] = useState([
-    {
-      id: 1,
-      name: "Lagos Main Branch",
-      manager: "John Doe",
-      contact: "+234 802 555 1234",
-      location: "Ikeja, Lagos, Nigeria",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Abuja Sorting Hub",
-      manager: "Jane Smith",
-      contact: "+234 807 111 2233",
-      location: "Central Area, Abuja, Nigeria",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Port Harcourt Delivery Center",
-      manager: "Michael Johnson",
-      contact: "+234 806 999 4433",
-      location: "Trans Amadi, PH, Nigeria",
-      status: "Inactive",
-    },
-  ]);
-
+  const [branches, setBranches] = useState([]);
   const [newBranch, setNewBranch] = useState({
     name: "",
     manager: "",
     contact: "",
     location: "",
-    status: "Active", // default selection
+    status: "Active",
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleAddBranch = () => {
+  const authToken = localStorage.getItem("authToken");
+
+  // Fetch branches from backend
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          "https://admin-ship-backend.onrender.com/api/branches",
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setBranches(data.branches);
+        } else {
+          toast.error(data.message || "Failed to fetch branches");
+        }
+      } catch (err) {
+        toast.error("Error fetching branches");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBranches();
+  }, [authToken]);
+
+  // Add new branch
+  const handleAddBranch = async () => {
     if (
       !newBranch.name ||
       !newBranch.manager ||
@@ -51,18 +60,37 @@ const Branches = () => {
       return;
     }
 
-    setBranches([
-      ...branches,
-      { id: branches.length + 1, ...newBranch }, // use selected status
-    ]);
-    setNewBranch({
-      name: "",
-      manager: "",
-      contact: "",
-      location: "",
-      status: "Active",
-    });
-    toast.success("New branch added successfully!");
+    try {
+      const res = await fetch(
+        "https://admin-ship-backend.onrender.com/api/branches",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(newBranch),
+        }
+      );
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBranches((prev) => [...prev, data.branch]);
+        setNewBranch({
+          name: "",
+          manager: "",
+          contact: "",
+          location: "",
+          status: "Active",
+        });
+        toast.success("Branch added successfully!");
+      } else {
+        toast.error(data.message || "Failed to add branch");
+      }
+    } catch (err) {
+      toast.error("Error adding branch");
+      console.error(err);
+    }
   };
 
   return (
@@ -122,7 +150,6 @@ const Branches = () => {
                 setNewBranch({ ...newBranch, location: e.target.value })
               }
             />
-            {/* Status selector */}
             <select
               value={newBranch.status}
               onChange={(e) =>
@@ -145,40 +172,44 @@ const Branches = () => {
       </Card>
 
       {/* ===== BRANCH LIST ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {branches.map((branch) => (
-          <Card
-            key={branch.id}
-            className="shadow-md hover:shadow-lg transition bg-white border border-gray-200"
-          >
-            <CardContent className="p-5 space-y-2">
-              <h3 className="text-lg font-semibold text-blue-700 flex items-center gap-2">
-                <Building2 size={18} /> {branch.name}
-              </h3>
-
-              <p className="text-gray-700 flex items-center gap-2">
-                <User size={16} /> Manager: {branch.manager}
-              </p>
-              <p className="text-gray-700 flex items-center gap-2">
-                <Phone size={16} /> {branch.contact}
-              </p>
-              <p className="text-gray-700 flex items-center gap-2">
-                <MapPin size={16} /> {branch.location}
-              </p>
-
-              <span
-                className={`inline-block px-3 py-1 text-sm rounded-full ${
-                  branch.status === "Active"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {branch.status}
-              </span>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-center text-gray-500">Loading branches...</p>
+      ) : branches.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {branches.map((branch) => (
+            <Card
+              key={branch._id || branch.id}
+              className="shadow-md hover:shadow-lg transition bg-white border border-gray-200"
+            >
+              <CardContent className="p-5 space-y-2">
+                <h3 className="text-lg font-semibold text-blue-700 flex items-center gap-2">
+                  <Building2 size={18} /> {branch.name}
+                </h3>
+                <p className="text-gray-700 flex items-center gap-2">
+                  <User size={16} /> Manager: {branch.manager}
+                </p>
+                <p className="text-gray-700 flex items-center gap-2">
+                  <Phone size={16} /> {branch.contact}
+                </p>
+                <p className="text-gray-700 flex items-center gap-2">
+                  <MapPin size={16} /> {branch.location}
+                </p>
+                <span
+                  className={`inline-block px-3 py-1 text-sm rounded-full ${
+                    branch.status === "Active"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {branch.status}
+                </span>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-gray-500">No branches found.</p>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import {
   Edit,
@@ -10,219 +10,204 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { io } from "socket.io-client";
+
+const BACKEND_URL = "https://admin-ship-backend.onrender.com";
 
 const ContentManagements = () => {
+  const [content, setContent] = useState(null);
   const [editingSection, setEditingSection] = useState(null);
-  const [content, setContent] = useState({
-    homepageBanner: "Fast and reliable delivery services across the globe.",
-    servicesInfo:
-      "We provide same-day, international, and express courier options.",
-    faqs: "Q: How do I track my shipment?\nA: Use your tracking ID on the tracking page.",
-    privacyPolicy: "We respect your privacy and ensure your data is protected.",
-    announcements:
-      "Holiday Shipping Notice: Expect slight delivery delays during the festive period.",
-  });
+  const socketRef = useRef(null);
+  const token = localStorage.getItem("authToken");
 
-  const handleSave = () => {
-    setEditingSection(null);
-    toast.success("Content updated successfully!");
+  // ================= FETCH CONTENT =================
+  const fetchContent = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/contents`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.contents.length > 0) {
+        setContent(data.contents[0]);
+      }
+    } catch (err) {
+      console.error("Fetch content error:", err);
+      toast.error("Failed to load content");
+    }
   };
 
+  // ================= INIT =================
+  useEffect(() => {
+    fetchContent();
+
+    socketRef.current = io(BACKEND_URL, {
+      transports: ["websocket"],
+    });
+
+    socketRef.current.on("contentUpdated", (updated) => {
+      if (!updated) return;
+      setContent(updated);
+      toast.success("Content updated live");
+    });
+
+    return () => socketRef.current?.disconnect();
+  }, []);
+
+  // ================= SAVE CONTENT =================
+  const handleSave = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/contents/${content._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(content),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        toast.error("Failed to update content");
+        return;
+      }
+
+      setEditingSection(null);
+      toast.success("Content saved");
+    } catch (err) {
+      console.error("Save content error:", err);
+      toast.error("Network error");
+    }
+  };
+
+  if (!content) {
+    return <p className="text-gray-500">Loading content...</p>;
+  }
+
+  // ================= UI =================
   return (
     <div className="space-y-6">
-      {/* Header */}
       <h1 className="text-2xl font-semibold text-gray-800">
         Content Management
       </h1>
 
-      <Card className="shadow-md border border-gray-200 bg-white">
+      <Card className="shadow-md border">
         <CardContent className="p-6 space-y-8">
-          {/* 🌍 Homepage Banner */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                <Globe size={18} /> Homepage Banner
-              </h2>
-              {editingSection === "banner" ? (
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700"
-                >
-                  <Save size={16} /> Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEditingSection("banner")}
-                  className="flex items-center gap-1 text-blue-700 hover:underline"
-                >
-                  <Edit size={16} /> Edit
-                </button>
-              )}
-            </div>
-            {editingSection === "banner" ? (
-              <textarea
-                className="w-full border rounded-lg p-2 h-20 bg-white border-gray-300 text-gray-800"
-                value={content.homepageBanner}
-                onChange={(e) =>
-                  setContent({ ...content, homepageBanner: e.target.value })
-                }
-              />
-            ) : (
-              <p className="text-gray-600">{content.homepageBanner}</p>
-            )}
-          </div>
+          {/*  Homepage Banner */}
+          <Section
+            title="Homepage Banner"
+            icon={<Globe size={18} />}
+            field="homepageBanner"
+            content={content}
+            setContent={setContent}
+            editingSection={editingSection}
+            setEditingSection={setEditingSection}
+            onSave={handleSave}
+          />
 
-          <hr className="border-gray-300" />
+          <Section
+            title="Services Information"
+            icon={<Info size={18} />}
+            field="servicesInfo"
+            content={content}
+            setContent={setContent}
+            editingSection={editingSection}
+            setEditingSection={setEditingSection}
+            onSave={handleSave}
+          />
 
-          {/* 🧾 Services Info */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                <Info size={18} /> Services Information
-              </h2>
-              {editingSection === "services" ? (
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700"
-                >
-                  <Save size={16} /> Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEditingSection("services")}
-                  className="flex items-center gap-1 text-blue-700 hover:underline"
-                >
-                  <Edit size={16} /> Edit
-                </button>
-              )}
-            </div>
-            {editingSection === "services" ? (
-              <textarea
-                className="w-full border rounded-lg p-2 h-20 bg-white border-gray-300 text-gray-800"
-                value={content.servicesInfo}
-                onChange={(e) =>
-                  setContent({ ...content, servicesInfo: e.target.value })
-                }
-              />
-            ) : (
-              <p className="text-gray-600">{content.servicesInfo}</p>
-            )}
-          </div>
+          <Section
+            title="FAQs"
+            icon={<FileText size={18} />}
+            field="faqs"
+            textarea
+            content={content}
+            setContent={setContent}
+            editingSection={editingSection}
+            setEditingSection={setEditingSection}
+            onSave={handleSave}
+          />
 
-          <hr className="border-gray-300" />
+          <Section
+            title="Privacy Policy"
+            icon={<ShieldCheck size={18} />}
+            field="privacyPolicy"
+            textarea
+            content={content}
+            setContent={setContent}
+            editingSection={editingSection}
+            setEditingSection={setEditingSection}
+            onSave={handleSave}
+          />
 
-          {/* 📋 FAQs */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                <FileText size={18} /> FAQs
-              </h2>
-              {editingSection === "faqs" ? (
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700"
-                >
-                  <Save size={16} /> Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEditingSection("faqs")}
-                  className="flex items-center gap-1 text-blue-700 hover:underline"
-                >
-                  <Edit size={16} /> Edit
-                </button>
-              )}
-            </div>
-            {editingSection === "faqs" ? (
-              <textarea
-                className="w-full border rounded-lg p-2 h-24 bg-white border-gray-300 text-gray-800"
-                value={content.faqs}
-                onChange={(e) =>
-                  setContent({ ...content, faqs: e.target.value })
-                }
-              />
-            ) : (
-              <pre className="text-gray-600 whitespace-pre-wrap">
-                {content.faqs}
-              </pre>
-            )}
-          </div>
-
-          <hr className="border-gray-300" />
-
-          {/* 🔒 Privacy Policy */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                <ShieldCheck size={18} /> Privacy Policy
-              </h2>
-              {editingSection === "privacy" ? (
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700"
-                >
-                  <Save size={16} /> Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEditingSection("privacy")}
-                  className="flex items-center gap-1 text-blue-700 hover:underline"
-                >
-                  <Edit size={16} /> Edit
-                </button>
-              )}
-            </div>
-            {editingSection === "privacy" ? (
-              <textarea
-                className="w-full border rounded-lg p-2 h-24 bg-white border-gray-300 text-gray-800"
-                value={content.privacyPolicy}
-                onChange={(e) =>
-                  setContent({ ...content, privacyPolicy: e.target.value })
-                }
-              />
-            ) : (
-              <p className="text-gray-600">{content.privacyPolicy}</p>
-            )}
-          </div>
-
-          <hr className="border-gray-300" />
-
-          {/* 📢 Announcements */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                <Speaker size={18} /> Announcements
-              </h2>
-              {editingSection === "announcement" ? (
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700"
-                >
-                  <Save size={16} /> Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEditingSection("announcement")}
-                  className="flex items-center gap-1 text-blue-700 hover:underline"
-                >
-                  <Edit size={16} /> Edit
-                </button>
-              )}
-            </div>
-            {editingSection === "announcement" ? (
-              <textarea
-                className="w-full border rounded-lg p-2 h-20 bg-white border-gray-300 text-gray-800"
-                value={content.announcements}
-                onChange={(e) =>
-                  setContent({ ...content, announcements: e.target.value })
-                }
-              />
-            ) : (
-              <p className="text-gray-600">{content.announcements}</p>
-            )}
-          </div>
+          <Section
+            title="Announcements"
+            icon={<Speaker size={18} />}
+            field="announcements"
+            content={content}
+            setContent={setContent}
+            editingSection={editingSection}
+            setEditingSection={setEditingSection}
+            onSave={handleSave}
+          />
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+// ================= REUSABLE SECTION =================
+const Section = ({
+  title,
+  icon,
+  field,
+  content,
+  setContent,
+  editingSection,
+  setEditingSection,
+  onSave,
+  textarea,
+}) => {
+  const isEditing = editingSection === field;
+
+  return (
+    <div>
+      <div className="flex justify-between mb-2">
+        <h2 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+          {icon} {title}
+        </h2>
+
+        {isEditing ? (
+          <button
+            onClick={onSave}
+            className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded-lg"
+          >
+            <Save size={16} /> Save
+          </button>
+        ) : (
+          <button
+            onClick={() => setEditingSection(field)}
+            className="flex items-center gap-1 text-blue-700"
+          >
+            <Edit size={16} /> Edit
+          </button>
+        )}
+      </div>
+
+      {isEditing ? (
+        <textarea
+          className="w-full border rounded-lg p-2"
+          rows={textarea ? 6 : 3}
+          value={content[field] || ""}
+          onChange={(e) => setContent({ ...content, [field]: e.target.value })}
+        />
+      ) : (
+        <p className="text-gray-600 whitespace-pre-wrap">{content[field]}</p>
+      )}
     </div>
   );
 };
