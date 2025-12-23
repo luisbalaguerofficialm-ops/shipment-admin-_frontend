@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -11,6 +11,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // ✅ AUTO REDIRECT IF ALREADY LOGGED IN
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -33,14 +41,14 @@ const Login = () => {
         throw new Error(data.message || "Invalid email or password");
       }
 
-      // Save auth data
+      // ✅ Save auth data
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("user", JSON.stringify(data.admin));
       localStorage.setItem("role", data.admin.role);
 
-      toast.success("Login successful!");
+      toast.success("Login successful");
 
-      // Redirect ALL admins to dashboard
+      // ✅ IMMEDIATE redirect
       navigate("/dashboard", { replace: true });
     } catch (err) {
       const message = err.message || "Login failed";
